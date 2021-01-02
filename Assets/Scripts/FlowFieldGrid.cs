@@ -15,14 +15,25 @@ public class FlowFieldGrid : MonoBehaviour
     [SerializeField]
     private GameObject _gridUnitTemplate = null;
 
-    private List<FlowFieldGridUnit> _gridUnits = null;
+    [SerializeField]
+    private Vector2 _endGoalIdx;
+    [SerializeField]
+    private GameObject _endGoalIndicatorTemplate = null;
+
+    private GameObject _endGoalIndicator = null;
+
+    private FlowFieldGridUnit[] _gridUnits;
 
     private void Start()
     {
-        _gridUnits = new List<FlowFieldGridUnit>(_rows * _cols);
+        _gridUnits = new FlowFieldGridUnit[_rows * _cols];
         GenerateGrid();
         IdentifyAllNeighbours();
-        Test();
+        UpdateGrid();
+        //Test();
+
+        if (!_endGoalIndicator)
+            _endGoalIndicator = Instantiate(_endGoalIndicatorTemplate, transform);
     }
 
     private void GenerateGrid()
@@ -33,12 +44,14 @@ public class FlowFieldGrid : MonoBehaviour
             {
                 GameObject gridUnit = Instantiate(_gridUnitTemplate, transform);
 
-                float posX = i * _unitSize;
-                float posZ = j * _unitSize;
+                //row-based
+                float posX = j * _unitSize;
+                float posZ = i * _unitSize;
+                //column based: i first
 
                 gridUnit.transform.position = new Vector3(posX, 0, posZ);
 
-                _gridUnits.Add(gridUnit.GetComponent<FlowFieldGridUnit>());
+                _gridUnits[i + j * _rows] = gridUnit.GetComponent<FlowFieldGridUnit>();
             }
         }
     }
@@ -66,7 +79,7 @@ public class FlowFieldGrid : MonoBehaviour
                             _gridUnits[currentIdx].Neighbours.Add(_gridUnits[i - 1 + (j - 1) * _rows]);
                     }
                 }
-                //right side from current unit
+                //right side from current unit ACTUALLY TOP SIDE
                 if (i + 1 < _rows)
                 {
                     _gridUnits[currentIdx].Neighbours.Add(_gridUnits[i + 1 + j * _rows]);
@@ -99,5 +112,39 @@ public class FlowFieldGrid : MonoBehaviour
         {
             unit.Cost = Random.Range(0, 255);
         }
+    }
+
+    private void UpdateGrid()
+    {
+        foreach (FlowFieldGridUnit unit in _gridUnits)
+        {
+            FlowFieldGridUnit closestNeighbour = null;
+            float closestToGoal = float.MaxValue;
+            foreach (FlowFieldGridUnit neighbour in unit.Neighbours)
+            {
+                float neighbourTotalCost = Vector3.Distance(_gridUnits[(int)_endGoalIdx.x + (int)_endGoalIdx.y * _rows].transform.position, neighbour.transform.position) + neighbour.Cost;
+                if (closestToGoal > neighbourTotalCost)
+                {
+                    closestNeighbour = neighbour;
+                    closestToGoal = neighbourTotalCost;
+                }
+            }
+
+            Vector3 vel = (closestNeighbour.transform.position - unit.transform.position).normalized;
+            unit.Velocity = new Vector2(vel.x, vel.z);
+        }
+    }
+
+    //returns X == amount of rows, Y == amount of cols and Z == unit size
+    public Vector3 Dimensions
+    {
+        get { return new Vector3(_rows, _cols, _unitSize); }
+    }
+
+    private void Update()
+    {
+        //UpdateGrid();
+
+        _endGoalIndicator.transform.position = new Vector3(_endGoalIdx.x * _unitSize, 0, _endGoalIdx.y * _unitSize);
     }
 }
