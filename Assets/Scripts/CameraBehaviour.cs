@@ -7,7 +7,7 @@ public class CameraBehaviour : MonoBehaviour
     [SerializeField]
     private GameObject _camera = null;
     [SerializeField]
-    private FlowFieldGrid _grid = null;
+    private FlowFieldController _controller = null;
 
     private float _scale = 1.0f;
     private float _originalY;
@@ -17,10 +17,10 @@ public class CameraBehaviour : MonoBehaviour
         if (!_camera)
             return;
 
-        if (!_grid)
+        if (!_controller)
             return;
 
-        Vector3 dimensions = _grid.Dimensions;
+        Vector3 dimensions = _controller.Dimensions;
         _originalY = _camera.transform.position.y + dimensions.x * dimensions.y / 2;
         _camera.transform.position = new Vector3((dimensions.x * dimensions.z) / 2, _originalY, (dimensions.y * dimensions.z) / 2);
     }

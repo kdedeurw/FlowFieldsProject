@@ -43,10 +43,6 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 1965b15f5708f07409c3c7ed2aae8905, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  _isDiagonal: 1
-  _rows: 30
-  _cols: 30
-  _unitSize: 10
-  _gridUnitTemplate: {fileID: 1508702012233303748, guid: c8a0452958bbc8f488e177eebb6fb242, type: 3}
   _endGoalIdx: {x: 15, y: 15}
   _endGoalIndicatorTemplate: {fileID: 8771712280367740114, guid: 344c75bf36b235147b1cca81888f972b, type: 3}
+  _debugCellTemplate: {fileID: 1508702012233303748, guid: c8a0452958bbc8f488e177eebb6fb242, type: 3}
