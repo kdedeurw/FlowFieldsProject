@@ -280,17 +280,17 @@ public class FlowFieldGrid
 
         foreach (FlowFieldCell currentCell in _grid)
         {
-            if (currentCell.Cost == byte.MaxValue)
-            {
-                currentCell.Direction = new Vector2(2.0f, 0.0f);
-                continue;
-            }
+            //skip impassable and endgoal
+            //if (currentCell.Cost == byte.MaxValue || currentCell.BestCost == 0) //bestcost is a better option since a cost of 0 might be possible?
+            //    continue;
+
+            //make units go 'back' from impassable terrain
 
             FlowFieldCell closestNeighbour = null;
             int bestCost = currentCell.BestCost;
             foreach (FlowFieldCell neighbour in GetNeighboursFromGridIndex(currentCell.GridIndex))
             {
-                if (neighbour.BestCost <= bestCost)
+                if (neighbour.BestCost < bestCost)
                 {
                     closestNeighbour = neighbour;
                     bestCost = neighbour.BestCost;
@@ -298,9 +298,12 @@ public class FlowFieldGrid
             }
 
             if (closestNeighbour != null)
-                currentCell.Direction = GetDirectionFromGridIndex(closestNeighbour.GridIndex - currentCell.GridIndex);
-            else
-                currentCell.Direction = new Vector2(2.0f, 0.0f); //'impossible' direction-vector
+            {
+                if (currentCell.Cost == byte.MaxValue)
+                    currentCell.Direction = GetDirectionFromGridIndex(currentCell.GridIndex - destinationCell.GridIndex); //destination to current (pointing away)
+                else
+                    currentCell.Direction = GetDirectionFromGridIndex(closestNeighbour.GridIndex - currentCell.GridIndex); //current to closest
+            }
         }
 
         //deprecated

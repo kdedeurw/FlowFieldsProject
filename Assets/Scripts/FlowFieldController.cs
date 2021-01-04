@@ -15,7 +15,7 @@ public class FlowFieldController : MonoBehaviour
     [SerializeField]
     private float _cellSize = 10.0f;
 
-    private void Start()
+    private void Awake()
     {
         if (!_flowFieldDebugManager && _flowFieldDebugManagerObject)
             _flowFieldDebugManager = Instantiate(_flowFieldDebugManagerObject, transform).GetComponent<FlowFieldDebugManager>();
@@ -65,5 +65,9 @@ public class FlowFieldController : MonoBehaviour
     public Vector3 Dimensions
     {
         get { return _flowFieldDebugManager.Grid.Dimensions; }
+    }
+    public FlowFieldGrid Grid
+    {
+        get { return _flowFieldDebugManager.Grid; }
     }
 }

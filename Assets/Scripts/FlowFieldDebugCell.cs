@@ -36,7 +36,7 @@ public class FlowFieldDebugCell : MonoBehaviour
 
         if (_arrowPivot)
         {
-            if (_cell.Direction.x == 2.0f) //the 'impossible' direction-vector == endgoal
+            if (_cell.Direction.x == 0.0f && _cell.Direction.y == 0.0f)
                 _arrowPivot.transform.eulerAngles = new Vector3(0, 0, 90); //upright
             else
                 _arrowPivot.transform.eulerAngles = new Vector3(0, Vector2.SignedAngle(_cell.Direction, Vector2.right), 0);
