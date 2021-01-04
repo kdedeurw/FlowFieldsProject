@@ -8,9 +8,11 @@ public class FlowFieldCell
     private Vector2Int _gridIndex; //able to backtrack from worldPos
     private byte _cost = 1;
     private ushort _bestCost = ushort.MaxValue;
+    private Vector2 _direction = new Vector2();
 
-    public FlowFieldCell(Vector2Int gridIndex)
+    public FlowFieldCell(Vector3 worldPos, Vector2Int gridIndex)
     {
+        //_worldPos = worldPos;
         _gridIndex = gridIndex;
         _cost = 1;
         _bestCost = ushort.MaxValue;
@@ -29,5 +31,14 @@ public class FlowFieldCell
     public Vector2Int GridIndex
     {
         get { return _gridIndex; }
+    }
+    //public Vector3 WorldPos
+    //{
+    //    get { return _worldPos; }
+    //}
+    public Vector2 Direction
+    {
+        set { _direction = value; }
+        get { return _direction; }
     }
 }

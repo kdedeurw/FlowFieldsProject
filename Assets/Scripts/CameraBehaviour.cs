@@ -8,6 +8,8 @@ public class CameraBehaviour : MonoBehaviour
     private GameObject _camera = null;
     [SerializeField]
     private FlowFieldController _controller = null;
+    [SerializeField]
+    private float _moveSpeed = 50.0f;
 
     private float _scale = 1.0f;
     private float _originalY;
@@ -35,5 +37,12 @@ public class CameraBehaviour : MonoBehaviour
                 _scale = 0.1f;
             _camera.transform.position = new Vector3(_camera.transform.position.x, _originalY * _scale, _camera.transform.position.z);
         }
+
+        Vector3 newPos = _camera.transform.position;
+
+        newPos.x += Input.GetAxis("Horizontal") * _moveSpeed * Time.deltaTime;
+        newPos.z += Input.GetAxis("Vertical") * _moveSpeed * Time.deltaTime;
+
+        _camera.transform.position = newPos;
     }
 }

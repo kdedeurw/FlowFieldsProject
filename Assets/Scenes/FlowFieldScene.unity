@@ -314,6 +314,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   _camera: {fileID: 208979889}
   _controller: {fileID: 928011598}
+  _moveSpeed: 100
 --- !u!1 &928011597
 GameObject:
   m_ObjectHideFlags: 0
@@ -345,7 +346,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   _flowFieldDebugManagerObject: {fileID: 3468891340789480110, guid: 1e899a4ef83cd29429c73f4cce5f93db, type: 3}
   _isDiagonal: 1
-  _dimensions: {x: 5, y: 5}
+  _dimensions: {x: 15, y: 15}
   _cellSize: 10
 --- !u!4 &928011599
 Transform:

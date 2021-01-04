@@ -31,12 +31,39 @@ public class FlowFieldController : MonoBehaviour
         //left mouse button
         if (Input.GetAxis("Mouse0") > 0)
         {
-            _flowFieldDebugManager.SetEndGoal(_flowFieldDebugManager.GetIndexFromWorldPos(Camera.main.ScreenToWorldPoint(Input.mousePosition)).GridIndex);
+            Ray ray = Camera.main.ScreenPointToRay(Input.mousePosition);
+            RaycastHit hitInfo;
+            if (Physics.Raycast(ray, out hitInfo, float.MaxValue, LayerMask.NameToLayer("GridUnit")))
+            {
+                _flowFieldDebugManager.Grid.GetCellFromWorldPos(hitInfo.collider.transform.position).Cost += 1;
+            }
+        }
+
+        //right mouse button
+        if (Input.GetAxis("Mouse1") > 0)
+        {
+            Ray ray = Camera.main.ScreenPointToRay(Input.mousePosition);
+            RaycastHit hitInfo;
+            if (Physics.Raycast(ray, out hitInfo, float.MaxValue, LayerMask.NameToLayer("GridUnit")))
+            {
+                _flowFieldDebugManager.Grid.GetCellFromWorldPos(hitInfo.collider.transform.position).Cost = byte.MaxValue;
+            }
+        }
+
+        //middle mouse button
+        if (Input.GetAxis("Mouse2") > 0)
+        {
+            Ray ray = Camera.main.ScreenPointToRay(Input.mousePosition);
+            RaycastHit hitInfo;
+            if (Physics.Raycast(ray, out hitInfo, float.MaxValue, LayerMask.NameToLayer("GridUnit")))
+            {
+                _flowFieldDebugManager.SetEndGoal(_flowFieldDebugManager.Grid.GetCellFromWorldPos(hitInfo.collider.transform.position));
+            }
         }
     }
 
     public Vector3 Dimensions
     {
-        get { return _flowFieldDebugManager.Dimensions; }
+        get { return _flowFieldDebugManager.Grid.Dimensions; }
     }
 }

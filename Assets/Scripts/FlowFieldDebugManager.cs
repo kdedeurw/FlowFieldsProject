@@ -7,7 +7,7 @@ public class FlowFieldDebugManager : MonoBehaviour
     private FlowFieldGrid _grid = null;
 
     [SerializeField]
-    private Vector2Int _endGoalIdx = new Vector2Int();
+    private Vector2Int _endGoalIdx = new Vector2Int(1, 1);
 
     [SerializeField]
     private GameObject _endGoalIndicatorTemplate = null;
@@ -19,7 +19,7 @@ public class FlowFieldDebugManager : MonoBehaviour
 
     private void Start()
     {
-        Test();
+        //TestCostFields();
 
         if (!_endGoalIndicator)
             _endGoalIndicator = Instantiate(_endGoalIndicatorTemplate, transform);
@@ -30,28 +30,26 @@ public class FlowFieldDebugManager : MonoBehaviour
         _grid = new FlowFieldGrid(dimensions, cellSize, isDiagonal);
         _debugGrid = new FlowFieldDebugCell[_grid.Rows * _grid.Colums];
 
-        for (int i = 0; i < _grid.Rows; ++i)
+        for (int y = 0; y < _grid.Colums; ++y)
         {
-            for (int j = 0; j < _grid.Colums; ++j)
+            for (int x = 0; x < _grid.Rows; ++x)
             {
                 GameObject gridUnit = Instantiate(_debugCellTemplate, transform);
 
-                //row-based
-                float posX = j * _grid.CellSize;
-                float posZ = i * _grid.CellSize;
-                //column based: i first
+                float posX = x * _grid.CellSize;
+                float posZ = y * _grid.CellSize;
 
                 gridUnit.transform.position = new Vector3(posX, 0, posZ);
 
                 FlowFieldDebugCell debugCell = gridUnit.GetComponent<FlowFieldDebugCell>();
-                debugCell.Cell = _grid.Cells[i + j * _grid.Rows];
+                debugCell.Cell = _grid.Cells[x + y * _grid.Rows];
 
-                _debugGrid[i + j * _grid.Rows] = debugCell;
+                _debugGrid[x + y * _grid.Rows] = debugCell;
             }
         }
     }
 
-    private void Test()
+    private void TestCostFields()
     {
         foreach (FlowFieldDebugCell unit in _debugGrid)
         {
@@ -59,24 +57,26 @@ public class FlowFieldDebugManager : MonoBehaviour
         }
     }
 
-    private void Update()
+    public void SetEndGoal(Vector2Int endGoalIdx)
     {
+        _endGoalIdx = endGoalIdx;
+        _grid.GenerateFlowField(_grid.GetCellFromGridIndex(endGoalIdx));
+
         if (_endGoalIndicator)
             _endGoalIndicator.transform.position = new Vector3(_endGoalIdx.x * _grid.CellSize, 0, _endGoalIdx.y * _grid.CellSize);
     }
 
-    public void SetEndGoal(Vector2Int endGoalIdx)
+    public void SetEndGoal(FlowFieldCell endGoalCell)
     {
-        _endGoalIdx = endGoalIdx;
+        _endGoalIdx = endGoalCell.GridIndex;
+        _grid.GenerateFlowField(endGoalCell);
+
+        if (_endGoalIndicator)
+            _endGoalIndicator.transform.position = new Vector3(_endGoalIdx.x * _grid.CellSize, 0, _endGoalIdx.y * _grid.CellSize);
     }
 
-    public FlowFieldCell GetIndexFromWorldPos(Vector3 worldPos)
+    public FlowFieldGrid Grid
     {
-        return _grid.GetCellFromWorldPos(worldPos);
-    }
-
-    public Vector3 Dimensions
-    {
-        get { return _grid.Dimensions; }
+        get { return _grid; }
     }
 }

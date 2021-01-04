@@ -11,6 +11,8 @@ public class FlowFieldGrid
 
     private FlowFieldCell[] _grid;
     private List<FlowFieldCell>[] _neighbours;
+    private FlowFieldCell _destinationCell = null;
+    private byte _formerCost;
 
     public FlowFieldGrid(Vector2Int dimensions, float cellSize = 10.0f, bool isDiagonal = true)
     {
@@ -27,11 +29,11 @@ public class FlowFieldGrid
     {
         _grid = new FlowFieldCell[_rows * _cols];
 
-        for (int i = 0; i < _rows; ++i)
+        for (int y = 0; y < _cols; ++y)
         {
-            for (int j = 0; j < _cols; ++j)
+            for (int x = 0; x < _rows; ++x)
             {
-                _grid[i + j * _rows] = new FlowFieldCell(new Vector2Int(i, j));
+                _grid[x + y * _cols] = new FlowFieldCell(new Vector3(x * _cellSize, 0, y * _cellSize), new Vector2Int(x, y));
             }
         }
     }
@@ -40,54 +42,54 @@ public class FlowFieldGrid
     {
         _neighbours = new List<FlowFieldCell>[_rows * _cols];
 
-        for (int i = 0; i < _rows; ++i)
+        for (int y = 0; y < _cols; ++y)
         {
-            for (int j = 0; j < _cols; ++j)
+            for (int x = 0; x < _rows; ++x)
             {
-                int currentIdx = i + j * _rows;
+                int currentIdx = x + y * _rows;
                 int size = 4; //4 directions
                 if (_isDiagonal)
                     size = 8; //+ 4 diagonal ones
                 _neighbours[currentIdx] = new List<FlowFieldCell>(size);
 
-                //left side from current unit
-                if (i - 1 >= 0)
+                //left side from current unit (== current cell - 1 in Xdir)
+                if (x - 1 >= 0)
                 {
-                    _neighbours[currentIdx].Add(_grid[i - 1 + j * _rows]);
+                    _neighbours[currentIdx].Add(_grid[currentIdx - 1]);
                     //diagonals
                     if (_isDiagonal)
                     {
-                        //left-top side
-                        if (j + 1 < _cols)
-                            _neighbours[currentIdx].Add(_grid[i - 1 + (j + 1) * _rows]);
-                        //left-bottom side
-                        if (j - 1 >= 0)
-                            _neighbours[currentIdx].Add(_grid[i - 1 + (j - 1) * _rows]);
+                        //left-top side (== current cell - 1 in Xdir + 1 row)
+                        if (y + 1 < _cols)
+                            _neighbours[currentIdx].Add(_grid[currentIdx - 1 + _rows]);
+                        //left-bottom side (== current cell - 1 in Xdir - 1 row)
+                        if (y - 1 >= 0)
+                            _neighbours[currentIdx].Add(_grid[currentIdx - 1 - _rows]);
                     }
                 }
-                //right side from current unit
-                if (i + 1 < _rows)
+                //right side from current unit (== current cell + 1 in Xdir)
+                if (x + 1 < _rows)
                 {
-                    _neighbours[currentIdx].Add(_grid[i + 1 + j * _rows]);
+                    _neighbours[currentIdx].Add(_grid[currentIdx + 1]);
                     //diagonals
                     if (_isDiagonal)
                     {
-                        //right-top side
-                        if (j + 1 < _cols)
-                            _neighbours[currentIdx].Add(_grid[i + 1 + (j + 1) * _rows]);
-                        //right-bottom side
-                        if (j - 1 >= 0)
-                            _neighbours[currentIdx].Add(_grid[i + 1 + (j - 1) * _rows]);
+                        //right-top side (== current cell + 1 in Xdir + 1 row)
+                        if (y + 1 < _cols)
+                            _neighbours[currentIdx].Add(_grid[currentIdx + 1 + _rows]);
+                        //right-bottom side (== current cell + 1 in Xdir - 1 row)
+                        if (y - 1 >= 0)
+                            _neighbours[currentIdx].Add(_grid[currentIdx + 1 - _rows]);
                     }
                 }
 
-                //top side from current unit
-                if (j + 1 < _cols)
-                    _neighbours[currentIdx].Add(_grid[i + (j + 1) * _rows]);
+                //top side from current unit (= current cell + 1 in Ydir)
+                if (y + 1 < _cols)
+                    _neighbours[currentIdx].Add(_grid[currentIdx + _rows]);
 
                 //bottom side from current unit
-                if (j - 1 >= 0)
-                    _neighbours[currentIdx].Add(_grid[i + (j - 1) * _rows]);
+                if (y - 1 >= 0)
+                    _neighbours[currentIdx].Add(_grid[currentIdx - _rows]);
             }
         }
     }
@@ -122,6 +124,35 @@ public class FlowFieldGrid
         get { return new Vector3(_rows, _cols, _cellSize); }
     }
 
+    private Vector2 GetDirectionFromGridIndex(Vector2Int gridIndex)
+    {
+        Vector2 direction = new Vector2(0, 0);
+
+        //pointing left or right?
+        if (gridIndex.x >= 1)
+            direction.x = 1;
+        else if (gridIndex.x <= -1)
+            direction.x = -1;
+        //else if x == 0, then direction.x stays 0
+
+        //pointing up or down?
+        if (gridIndex.y >= 1)
+            direction.y = 1;
+        else if (gridIndex.y <= -1)
+            direction.y = -1;
+        //else if y == 0, then direction.y stays 0
+
+        //if both not 0, create diagonal vector (== scale 1 or -1 with 0.707)
+        if (Mathf.Abs(direction.x) != 0 && Mathf.Abs(direction.y) != 0)
+        {
+            //== 'normalize' vector ((-)1,(-)1)
+            direction.x *= 0.707f; //will keep signed value
+            direction.y *= 0.707f; //will keep signed value
+        }
+
+        return direction;
+    }
+
     public FlowFieldCell GetCellFromGridIndex(Vector2Int gridIndex)
     {
         if (gridIndex.x >= _rows || gridIndex.y >= _cols)
@@ -139,6 +170,25 @@ public class FlowFieldGrid
             return null;
 
         return _grid[xIdx + yIdx * _rows];
+    }
+
+    public Vector2Int GetIndexFromWorldPos(Vector3 worldPos)
+    {
+        int xIdx = (int)(worldPos.x / _cellSize);
+        int yIdx = (int)(worldPos.z / _cellSize);
+
+        if (xIdx >= _rows || yIdx >= _cols)
+            return new Vector2Int(-1, -1);
+
+        return new Vector2Int(xIdx, yIdx);
+    }
+
+    public Vector3 GetWorldPosFromIndex(Vector2Int gridIndex)
+    {
+        float xPos = gridIndex.x * _cellSize; //- _cellSize / 2;
+        float yPos = gridIndex.y * _cellSize; //- _cellSize / 2;
+
+        return new Vector3(xPos, 0, yPos);
     }
 
     public List<FlowFieldCell> GetNeighboursFromGridIndex(Vector2Int gridIndex)
@@ -160,9 +210,28 @@ public class FlowFieldGrid
         return _neighbours[xIdx + yIdx * _rows];
     }
 
-    private void GenerateIntegrationField(FlowFieldCell _destinationCell)
+    private void ResetGrid()
     {
+        foreach (FlowFieldCell cell in _grid)
+        {
+            cell.BestCost = ushort.MaxValue;
+        }
+        if (_destinationCell != null)
+        {
+            //reset former destination cell to its original cost
+            _destinationCell.Cost = _formerCost;
+        }
+    }
+
+    private void GenerateIntegrationField(FlowFieldCell destinationCell)
+    {
+        //overwrite/assign new destination cell
+        _destinationCell = destinationCell;
+        //save cost from destinationcell so that it cannot get lost
+        _formerCost = _destinationCell.Cost;
+        //since we set it to 0 here
         _destinationCell.Cost = 0;
+        //bestcost can be ignored anyway
         _destinationCell.BestCost = 0;
 
         Queue<FlowFieldCell> openList = new Queue<FlowFieldCell>();
@@ -206,15 +275,42 @@ public class FlowFieldGrid
 
     public void GenerateFlowField(FlowFieldCell destinationCell)
     {
+        ResetGrid();
         GenerateIntegrationField(destinationCell);
 
-        //foreach (FlowFieldDebugCell unit in _debugGrid)
+        foreach (FlowFieldCell currentCell in _grid)
+        {
+            if (currentCell.Cost == byte.MaxValue)
+            {
+                currentCell.Direction = new Vector2(2.0f, 0.0f);
+                continue;
+            }
+
+            FlowFieldCell closestNeighbour = null;
+            int bestCost = currentCell.BestCost;
+            foreach (FlowFieldCell neighbour in GetNeighboursFromGridIndex(currentCell.GridIndex))
+            {
+                if (neighbour.BestCost <= bestCost)
+                {
+                    closestNeighbour = neighbour;
+                    bestCost = neighbour.BestCost;
+                }
+            }
+
+            if (closestNeighbour != null)
+                currentCell.Direction = GetDirectionFromGridIndex(closestNeighbour.GridIndex - currentCell.GridIndex);
+            else
+                currentCell.Direction = new Vector2(2.0f, 0.0f); //'impossible' direction-vector
+        }
+
+        //deprecated
+        //foreach (FlowFieldCell currentCell in _grid)
         //{
-        //    FlowFieldDebugCell closestNeighbour = null;
+        //    FlowFieldCell closestNeighbour = null;
         //    float closestToGoal = float.MaxValue;
-        //    foreach (FlowFieldDebugCell neighbour in unit.Neighbours)
+        //    foreach (FlowFieldCell neighbour in GetNeighboursFromWorldPos(currentCell.WorldPos))
         //    {
-        //        float neighbourTotalCost = Vector3.Distance(_debugGrid[(int)_endGoalIdx.x + (int)_endGoalIdx.y * _grid.Rows].transform.position, neighbour.transform.position) + neighbour.Cost;
+        //        float neighbourTotalCost = Vector3.Distance(destinationCell.WorldPos, neighbour.WorldPos) + neighbour.Cost;
         //        if (closestToGoal > neighbourTotalCost)
         //        {
         //            closestNeighbour = neighbour;
@@ -222,8 +318,8 @@ public class FlowFieldGrid
         //        }
         //    }
         //
-        //    Vector3 vel = (closestNeighbour.transform.position - unit.transform.position).normalized;
-        //    unit.Velocity = new Vector2(vel.x, vel.z);
+        //    Vector3 vel = (closestNeighbour.WorldPos - currentCell.WorldPos).normalized;
+        //    currentCell.Direction = new Vector2(vel.x, vel.z);
         //}
     }
 }
